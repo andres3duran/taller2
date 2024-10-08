@@ -22,12 +22,14 @@ jobs:
     needs: load_dates
     strategy:
       matrix:
-        date: ${{ fromJson(steps.load_dates.outputs.dates) }}
-    
+        date: ${{ fromJson(steps.load_dates.outputs.dates) }} # Esto no es válido
+
     steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+
       - name: Download image for ${{ matrix.date }}
         run: |
-          # Create a directory to store images
           mkdir -p images
 
           # Check if the image already exists in the cache
@@ -54,4 +56,4 @@ jobs:
         with:
           name: img-${{ matrix.date }}
           path: images/img-${{ matrix.date }}.jpg
-          retention-days: 1  # Artefactos se retendrán por 1 día
+          retention-days: 1
