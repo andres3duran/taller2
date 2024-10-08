@@ -25,7 +25,7 @@ jobs:
     needs: cargar_fechas
     strategy:
       matrix:
-        fecha: [${{ fromJson(needs.cargar_fechas.outputs.fechas) }}]  # Convertir fechas a matriz
+        fecha: ${{ fromJson(needs.cargar_fechas.outputs.fechas) }}  # Convertir a matriz
     continue-on-error: true
     steps:
       - name: Revisar el repositorio
@@ -38,20 +38,25 @@ jobs:
         run: |
           fecha="${{ matrix.fecha }}"  # Obtener la fecha de la matriz
           echo "Procesando fecha: $fecha"
+          
+          # Validar el formato de la fecha
           if [[ ! $fecha =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
             echo "Formato de fecha inválido: $fecha. Saltando."
-            exit 0  # Saltar este job
+            exit 0  # Saltar este job si el formato es inválido
           fi
 
-          if [ -f "cache/${fecha}.json" ]; then
+          # Verificar caché
+          cache_file="cache/${fecha}.json"
+          if [ -f "$cache_file" ]; then
             echo "Usando datos en caché para la fecha: $fecha"
-            url=$(jq -r '.url' cache/${fecha}.json)
+            url=$(jq -r '.url' "$cache_file")
           else
-            respuesta=$(curl -s "https://api.nasa.gov/planetary/apod?api_key=${{ secrets.NASA_API_KEY }}&date=${fecha}")
-            echo "$respuesta" > "cache/${fecha}.json"
-            url=$(echo "$respuesta" | jq -r '.url')
+            response=$(curl -s "https://api.nasa.gov/planetary/apod?api_key=${{ secrets.NASA_API_KEY }}&date=${fecha}")
+            echo "$response" > "$cache_file"
+            url=$(echo "$response" | jq -r '.url')
           fi
           
+          # Descargar imagen
           if [ "$url" != "null" ]; then
             echo "Descargando imagen desde $url"
             mkdir -p images
@@ -64,5 +69,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: "Imágenes de la NASA para ${{ matrix.fecha }}"
-          path: images/*
+          path: images/img-${{ matrix.fecha }}.jpg
           retention-days: 1
