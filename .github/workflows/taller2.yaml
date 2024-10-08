@@ -23,6 +23,10 @@ jobs:
   exportar_imagenes:
     runs-on: ubuntu-latest
     needs: cargar_fechas
+    strategy:
+      matrix:
+        fecha: [${{ fromJson(needs.cargar_fechas.outputs.fechas) }}]  # Convertir fechas a matriz
+    continue-on-error: true
     steps:
       - name: Revisar el repositorio
         uses: actions/checkout@v4
@@ -32,36 +36,33 @@ jobs:
 
       - name: Descargar imágenes
         run: |
-          fechas="${{ needs.cargar_fechas.outputs.fechas }}"  
-          IFS=' ' read -r -a array_fechas <<< "$fechas" 
-          for fecha in "${array_fechas[@]}"; do
-            echo "Procesando fecha: $fecha"
-            if [[ ! $fecha =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
-              echo "Formato de fecha inválido: $fecha."
-              continue
-            fi
+          fecha="${{ matrix.fecha }}"  # Obtener la fecha de la matriz
+          echo "Procesando fecha: $fecha"
+          if [[ ! $fecha =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+            echo "Formato de fecha inválido: $fecha. Saltando."
+            exit 0  # Saltar este job
+          fi
 
-            if [ -f "cache/${fecha}.json" ]; then
-              echo "Usando datos en caché para la fecha: $fecha"
-              url=$(jq -r '.url' cache/${fecha}.json)
-            else
-              respuesta=$(curl -s "https://api.nasa.gov/planetary/apod?api_key=${{ secrets.NASA_API_KEY }}&date=${fecha}")
-              echo "$respuesta" > "cache/${fecha}.json"
-              url=$(echo "$respuesta" | jq -r '.url')
-            fi
-            
-            if [ "$url" != "null" ]; then
-              echo "Descargando imagen desde $url"
-              mkdir -p images
-              curl -s -o "images/img-${fecha}.jpg" "$url"
-            else
-              echo "No se encontró imagen para la fecha: $fecha"
-            fi
-          done
+          if [ -f "cache/${fecha}.json" ]; then
+            echo "Usando datos en caché para la fecha: $fecha"
+            url=$(jq -r '.url' cache/${fecha}.json)
+          else
+            respuesta=$(curl -s "https://api.nasa.gov/planetary/apod?api_key=${{ secrets.NASA_API_KEY }}&date=${fecha}")
+            echo "$respuesta" > "cache/${fecha}.json"
+            url=$(echo "$respuesta" | jq -r '.url')
+          fi
+          
+          if [ "$url" != "null" ]; then
+            echo "Descargando imagen desde $url"
+            mkdir -p images
+            curl -s -o "images/img-${fecha}.jpg" "$url"
+          else
+            echo "No se encontró imagen para la fecha: $fecha"
+          fi
 
       - name: Subir imágenes como artefactos
         uses: actions/upload-artifact@v4
         with:
-          name: "Imágenes de la NASA"
+          name: "Imágenes de la NASA para ${{ matrix.fecha }}"
           path: images/*
           retention-days: 1
