@@ -15,20 +15,27 @@ jobs:
       - name: Load dates from JSON
         id: load_dates
         run: |
-          echo "dates=$(jq -c '.dates[]' dates.json)" >> $GITHUB_ENV
+          dates=$(jq -r '.dates[]' dates.json | tr '\n' ' ')
+          echo "dates=${dates}" >> $GITHUB_ENV
 
-      - name: Download images
+      - name: Validate and Download images
         run: |
           mkdir -p images
           for date in $dates; do
+            # Check if the date format is valid (YYYY-MM-DD)
+            if ! [[ $date =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+              echo "Invalid date format: $date"
+              continue
+            fi
+            
             echo "Processing date: $date"
             if [ -f "cache/$date.json" ]; then
               echo "Using cached data for date: $date"
               url=$(jq -r '.url' cache/$date.json)
             else
               response=$(curl -s "https://api.nasa.gov/planetary/apod?api_key=${{ secrets.NASA_API_KEY }}&date=$date")
-              echo $response > "cache/$date.json"
-              url=$(echo $response | jq -r '.url')
+              echo "$response" > "cache/$date.json"
+              url=$(echo "$response" | jq -r '.url')
             fi
             
             if [ "$url" != "null" ]; then
