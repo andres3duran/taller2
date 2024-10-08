@@ -18,14 +18,14 @@ jobs:
         id: cargar_fechas
         run: |
           fechas=$(jq -r '.dates[]' dates.json | jq -R . | jq -s .)  # Convertir a array JSON
-          echo "fechas=${fechas}" >> $GITHUB_ENV  # Cambiar a GITHUB_ENV
-          
+          echo "fechas=${fechas}" >> $GITHUB_OUTPUT  # Guardar como salida del job
+
   exportar_imagenes:
     runs-on: ubuntu-latest
     needs: cargar_fechas
     strategy:
       matrix:
-        fecha: ${{ fromJson(env.fechas) }}  # Usar fechas como matriz desde GITHUB_ENV
+        fecha: ${{ fromJson(needs.cargar_fechas.outputs.fechas) }}  # Usar fechas como matriz
     continue-on-error: true
     steps:
       - name: Revisar el repositorio
