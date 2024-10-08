@@ -18,14 +18,14 @@ jobs:
         id: cargar_fechas
         run: |
           fechas=$(jq -r '.dates[]' dates.json | jq -R . | jq -s .)  # Convertir a array JSON
-          echo "fechas=${fechas}" >> $GITHUB_OUTPUT
-
+          echo "fechas=${fechas}" >> $GITHUB_ENV  # Cambiar a GITHUB_ENV
+          
   exportar_imagenes:
     runs-on: ubuntu-latest
     needs: cargar_fechas
     strategy:
       matrix:
-        fecha: ${{ fromJson(needs.cargar_fechas.outputs.fechas) }}  # Usar fechas como matriz
+        fecha: ${{ fromJson(env.fechas) }}  # Usar fechas como matriz desde GITHUB_ENV
     continue-on-error: true
     steps:
       - name: Revisar el repositorio
@@ -71,5 +71,3 @@ jobs:
           name: "Imágenes de la NASA para ${{ matrix.fecha }}"
           path: images/img-${{ matrix.fecha }}.jpg
           retention-days: 1
-
-
