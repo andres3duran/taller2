@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  load_dates:
+  export_images:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -15,45 +15,33 @@ jobs:
       - name: Load dates from JSON
         id: load_dates
         run: |
-          echo "::set-output name=dates::$(jq -c '.dates[]' dates.json)" 
+          echo "dates=$(jq -c '.dates[]' dates.json)" >> $GITHUB_ENV
 
-  export_images:
-    runs-on: ubuntu-latest
-    needs: load_dates
-    strategy:
-      matrix:
-        date: ${{ fromJson(steps.load_dates.outputs.dates) }} # Esto no es válido
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v2
-
-      - name: Download image for ${{ matrix.date }}
+      - name: Download images
         run: |
           mkdir -p images
+          for date in $dates; do
+            echo "Processing date: $date"
+            if [ -f "cache/$date.json" ]; then
+              echo "Using cached data for date: $date"
+              url=$(jq -r '.url' cache/$date.json)
+            else
+              response=$(curl -s "https://api.nasa.gov/planetary/apod?api_key=${{ secrets.NASA_API_KEY }}&date=$date")
+              echo $response > "cache/$date.json"
+              url=$(echo $response | jq -r '.url')
+            fi
+            
+            if [ "$url" != "null" ]; then
+              echo "Downloading image from $url"
+              curl -s -o "images/img-$date.jpg" "$url"
+            else
+              echo "No image found for date: $date"
+            fi
+          done
 
-          # Check if the image already exists in the cache
-          if [ -f "cache/${{ matrix.date }}.json" ]; then
-            echo "Using cached data for date: ${{ matrix.date }}"
-            url=$(jq -r '.url' cache/${{ matrix.date }}.json)
-          else
-            # Call the NASA API
-            response=$(curl -s "https://api.nasa.gov/planetary/apod?api_key=${{ secrets.NASA_API_KEY }}&date=${{ matrix.date }}")
-            echo $response > "cache/${{ matrix.date }}.json"
-            url=$(echo $response | jq -r '.url')
-          fi
-
-          # Download the image if the URL is valid
-          if [ "$url" != "null" ]; then
-            echo "Downloading image from $url"
-            curl -s -o "images/img-${{ matrix.date }}.jpg" "$url"
-          else
-            echo "No image found for date: ${{ matrix.date }}"
-          fi
-
-      - name: Upload image as artifact
+      - name: Upload images as artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: img-${{ matrix.date }}
-          path: images/img-${{ matrix.date }}.jpg
+          name: "NASA Images"
+          path: images/*
           retention-days: 1
