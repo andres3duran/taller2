@@ -17,8 +17,8 @@ jobs:
       - name: Cargar fechas desde JSON
         id: cargar_fechas
         run: |
-          fechas=$(jq -r '.dates[]' dates.json | tr '\n' ',' | sed 's/,$//')  # Convertir a CSV
-          echo "fechas=[${fechas}]" >> $GITHUB_OUTPUT  # Formato para matriz
+          fechas=$(jq -r '.dates[]' dates.json | jq -R . | jq -s .)  # Convertir a array JSON
+          echo "fechas=${fechas}" >> $GITHUB_OUTPUT
 
   exportar_imagenes:
     runs-on: ubuntu-latest
@@ -71,4 +71,5 @@ jobs:
           name: "Imágenes de la NASA para ${{ matrix.fecha }}"
           path: images/img-${{ matrix.fecha }}.jpg
           retention-days: 1
+
 
