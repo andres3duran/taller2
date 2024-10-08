@@ -18,15 +18,11 @@ jobs:
         id: load_dates
         run: |
           dates=$(jq -r '.dates[]' dates.json | tr '\n' ' ')
-          echo "dates=${dates}" >> $GITHUB_OUTPUT  # Establecer la variable de salida
+          echo "dates=${dates}" >> $GITHUB_OUTPUT
 
   export_images:
     runs-on: ubuntu-latest
     needs: load_dates
-    strategy:
-      matrix:
-        date: ${{ fromJson(needs.load_dates.outputs.dates) }}  # Usar el formato correcto
-    continue-on-error: true
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
@@ -34,29 +30,37 @@ jobs:
       - name: Create cache directory
         run: mkdir -p cache
 
-      - name: Validate and Download image for ${{ matrix.date }}
+      - name: Download images
         run: |
-          echo "Processing date: ${{ matrix.date }}"
-          if [ -f "cache/${{ matrix.date }}.json" ]; then
-            echo "Using cached data for date: ${{ matrix.date }}"
-            url=$(jq -r '.url' cache/${{ matrix.date }}.json)
-          else
-            response=$(curl -s "https://api.nasa.gov/planetary/apod?api_key=${{ secrets.NASA_API_KEY }}&date=${{ matrix.date }}")
-            echo "$response" > "cache/${{ matrix.date }}.json"
-            url=$(echo "$response" | jq -r '.url')
-          fi
-          
-          if [ "$url" != "null" ]; then
-            echo "Downloading image from $url"
-            mkdir -p images  # Asegurarse de que el directorio existe
-            curl -s -o "images/img-${{ matrix.date }}.jpg" "$url"
-          else
-            echo "No image found for date: ${{ matrix.date }}"
-          fi
+          dates=(${ { fromJson(needs.load_dates.outputs.dates) } })  # Convertir a un array
+          for date in "${dates[@]}"; do
+            echo "Processing date: $date"
+            if [[ ! $date =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+              echo "Invalid date format: $date. Skipping."
+              continue
+            fi
+
+            if [ -f "cache/${date}.json" ]; then
+              echo "Using cached data for date: $date"
+              url=$(jq -r '.url' cache/${date}.json)
+            else
+              response=$(curl -s "https://api.nasa.gov/planetary/apod?api_key=${{ secrets.NASA_API_KEY }}&date=${date}")
+              echo "$response" > "cache/${date}.json"
+              url=$(echo "$response" | jq -r '.url')
+            fi
+            
+            if [ "$url" != "null" ]; then
+              echo "Downloading image from $url"
+              mkdir -p images
+              curl -s -o "images/img-${date}.jpg" "$url"
+            else
+              echo "No image found for date: $date"
+            fi
+          done
 
       - name: Upload images as artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: "NASA Images for ${{ matrix.date }}"
+          name: "NASA Images"
           path: images/*
           retention-days: 1
