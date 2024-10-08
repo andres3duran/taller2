@@ -12,25 +12,24 @@ jobs:
       dates: ${{ steps.set_dates.outputs.dates }}
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Load dates from JSON
         id: load_dates
         run: |
-          dates=$(jq -r '.dates[]' dates.json | tr '\n' ',')
-          echo "dates=${dates}" >> $GITHUB_OUTPUT  # Cambiado a GITHUB_OUTPUT
-          echo "::set-output name=dates::${dates}"  # Mantener esta línea por compatibilidad
+          dates=$(jq -r '.dates | @csv' dates.json)  # Convert to CSV format
+          echo "dates=${dates}" >> $GITHUB_OUTPUT  # Set the output variable
 
   export_images:
     runs-on: ubuntu-latest
     needs: load_dates
     strategy:
       matrix:
-        date: [${{ fromJson(needs.load_dates.outputs.dates) }}]  # Usar las fechas cargadas
+        date: ${{ fromJson(needs.load_dates.outputs.dates) }}  # Create a matrix from the output
     continue-on-error: true
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Create cache directory
         run: mkdir -p cache
