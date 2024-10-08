@@ -17,7 +17,7 @@ jobs:
       - name: Cargar fechas desde JSON
         id: cargar_fechas
         run: |
-          fechas=$(jq -r '.dates[]' dates.json | tr '\n' ' ')  # Obtener las fechas
+          fechas=$(jq -c '.dates' dates.json)  # Obtener las fechas en formato JSON
           echo "fechas=${fechas}" >> $GITHUB_OUTPUT  # Establecer la salida
 
   exportar_imagenes:
