@@ -18,6 +18,9 @@ jobs:
           dates=$(jq -r '.dates[]' dates.json | tr '\n' ' ')
           echo "dates=${dates}" >> $GITHUB_ENV
 
+      - name: Create cache directory
+        run: mkdir -p cache  # Crear el directorio cache
+
       - name: Validate and Download images
         run: |
           mkdir -p images
