@@ -45,12 +45,13 @@ jobs:
             exit 0  # Saltar este job si el formato es inválido
           fi
 
-          # Verificar caché
+          # Verificar caché usando el nombre de la fecha
           cache_file="cache/${fecha}.json"
           if [ -f "$cache_file" ]; then
             echo "Usando datos en caché para la fecha: $fecha"
             url=$(jq -r '.url' "$cache_file")
           else
+            echo "Llamando a la API de NASA para la fecha: $fecha"
             response=$(curl -s "https://api.nasa.gov/planetary/apod?api_key=${{ secrets.NASA_API_KEY }}&date=${fecha}")
             echo "$response" > "$cache_file"
             url=$(echo "$response" | jq -r '.url')
