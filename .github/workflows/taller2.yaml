@@ -34,6 +34,14 @@ jobs:
       - name: Crear directorio de caché
         run: mkdir -p cache
 
+      - name: Usar caché para la respuesta de la API
+        uses: actions/cache@v3
+        with:
+          path: cache
+          key: ${{ runner.os }}-nasa-api-${{ matrix.fecha }}
+          restore-keys: |
+            ${{ runner.os }}-nasa-api-
+
       - name: Descargar imágenes
         run: |
           fecha="${{ matrix.fecha }}"  # Obtener la fecha de la matriz
@@ -45,7 +53,7 @@ jobs:
             exit 0  # Saltar este job si el formato es inválido
           fi
 
-          # Verificar caché usando el nombre de la fecha
+          # Verificar caché
           cache_file="cache/${fecha}.json"
           if [ -f "$cache_file" ]; then
             echo "Usando datos en caché para la fecha: $fecha"
