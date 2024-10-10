@@ -31,8 +31,11 @@ jobs:
       - name: Revisar el repositorio
         uses: actions/checkout@v4
 
+      - name: Crear directorio de caché
+        run: mkdir -p cache
+
       - name: Usar caché para la respuesta de la API
-        uses: actions/cache@v4
+        uses: actions/cache@v3
         with:
           path: cache
           key: nasa-api-${{ matrix.fecha }}
