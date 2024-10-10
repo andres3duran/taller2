@@ -35,7 +35,7 @@ jobs:
         run: mkdir -p cache
 
       - name: Usar caché para la respuesta de la API
-        uses: actions/cache@v3
+        uses: actions/cache@v4  # Actualizado a la versión v4
         with:
           path: cache
           key: nasa-api-${{ matrix.fecha }}
