@@ -47,7 +47,6 @@ jobs:
         run: |
           fecha="${{ matrix.fecha }}"
           echo "Procesando fecha: $fecha"
-
           cache_file="cache/${fecha}.json"
           if [ -f "$cache_file" ]; then
             echo "Usando datos en caché para la fecha: $fecha"
@@ -58,9 +57,10 @@ jobs:
             echo "$response" > "$cache_file"
             url=$(echo "$response" | jq -r '.url')
           fi
-          
+
           if [ "$url" != "null" ] && [ -n "$url" ]; then
-            echo "url=$url" >> $GITHUB_OUTPUT
+            echo "URL de la imagen: $url"
+            echo "url=$url" >> $GITHUB_ENV  # Usando el archivo de entorno
           else
             echo "No se encontró imagen para la fecha: $fecha"
             exit 0
@@ -69,7 +69,7 @@ jobs:
       - name: Descargar imagen desde la URL
         uses: minituff/save-image@v1.4
         with:
-          url: ${{ steps.obtener_url.outputs.url }}
+          url: ${{ env.url }}  # Accediendo a la variable de entorno
           imagePath: images/img-${{ matrix.fecha }}.jpg
 
       - name: Verificar imagen descargada
