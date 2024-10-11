@@ -60,11 +60,14 @@ jobs:
 
           if [ "$url" != "null" ] && [ -n "$url" ]; then
             echo "URL de la imagen: $url"
-            echo "url=$url" >> $GITHUB_ENV  # Usando el archivo de entorno
+            echo "url=$url" >> $GITHUB_ENV  
           else
             echo "No se encontró imagen para la fecha: $fecha"
             exit 0
           fi
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
 
       - name: Descargar imagen desde la URL
         uses: minituff/save-image@v1.4
