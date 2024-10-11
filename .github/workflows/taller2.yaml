@@ -68,7 +68,7 @@ jobs:
 
       - name: Descargar imagen desde la URL
         id: download_image
-        uses: actions/download-file@v2
+        uses: actions/download-file@v3
         with:
           url: ${{ steps.obtener_url.outputs.url }}
           output: "images/img-${{ matrix.fecha }}.jpg"
