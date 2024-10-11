@@ -73,10 +73,11 @@ jobs:
           fi
 
       - name: Descargar imagen desde la URL
-        uses: ad-m/curl@v1.1.0
-        with:
-          url: ${{ steps.obtener_url.outputs.url }}
-          output: images/img-${{ matrix.fecha }}.jpg
+        run: |
+          url="${{ steps.obtener_url.outputs.url }}"
+          output_path="images/img-${{ matrix.fecha }}.jpg"
+          echo "Descargando imagen desde: $url"
+          curl -L "$url" -o "$output_path"
 
       - name: Subir imágenes como artefactos
         uses: actions/upload-artifact@v4
