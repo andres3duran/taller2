@@ -66,13 +66,18 @@ jobs:
             exit 0
           fi
 
-      - name: Download file from URL
+      - name: Descargar imagen desde la URL
         uses: minituff/save-image@v1.4
         with:
           url: ${{ steps.obtener_url.outputs.url }}
-          output: images/img-${{ matrix.fecha }}.jpg
+          imagePath: images/img-${{ matrix.fecha }}.jpg
 
-
+      - name: Verificar imagen descargada
+        run: |
+          if [[ ! -f "images/img-${{ matrix.fecha }}.jpg" ]]; then
+            echo "Error: La imagen no fue descargada correctamente."
+          exit 1
+          fi
 
       - name: Subir imágenes como artefactos
         uses: actions/upload-artifact@v4
