@@ -35,14 +35,15 @@ jobs:
         run: mkdir -p cache
 
       - name: Usar caché para la respuesta de la API
-        uses: actions/cache@v4  # Actualizado a la versión v4
+        uses: actions/cache@v4
         with:
           path: cache
           key: nasa-api-${{ matrix.fecha }}
           restore-keys: |
             nasa-api-
 
-      - name: Descargar imágenes
+      - name: Obtener la URL de la imagen desde la API de NASA
+        id: obtener_url
         run: |
           fecha="${{ matrix.fecha }}"
           echo "Procesando fecha: $fecha"
@@ -63,14 +64,19 @@ jobs:
             echo "$response" > "$cache_file"
             url=$(echo "$response" | jq -r '.url')
           fi
-          
+
           if [ "$url" != "null" ]; then
-            echo "Descargando imagen desde $url"
-            mkdir -p images
-            curl -s -o "images/img-${fecha}.jpg" "$url"
+            echo "url=$url" >> $GITHUB_OUTPUT
           else
             echo "No se encontró imagen para la fecha: $fecha"
+            exit 0
           fi
+
+      - name: Descargar imagen desde la URL
+        uses: jpmens/wget@v1.0.1  # Acción para descargar la imagen
+        with:
+          url: ${{ steps.obtener_url.outputs.url }}
+          filename: images/img-${{ matrix.fecha }}.jpg
 
       - name: Subir imágenes como artefactos
         uses: actions/upload-artifact@v4
