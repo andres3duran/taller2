@@ -48,9 +48,9 @@ jobs:
           fecha="${{ matrix.fecha }}"
           echo "Procesando fecha: $fecha"
 
-          # Validar formato y validez de la fecha usando jq
-          if ! jq -e "($fecha | test(\"^[0-9]{4}-[0-9]{2}-[0-9]{2}$\")) and ($fecha | strptime(\"%Y-%m-%d\") | . != null)" <<< "$fecha"; then
-            echo "Fecha inválida: $fecha. Saltando."
+          # Validar formato de fecha simple
+          if ! [[ "$fecha" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+            echo "Formato de fecha inválido: $fecha. Saltando."
             exit 0
           fi
 
@@ -73,7 +73,7 @@ jobs:
           fi
 
       - name: Descargar imagen desde la URL
-        uses: jakejarvis/download-gh-release-asset@v1
+        uses: ad-m/curl@v1.1.0
         with:
           url: ${{ steps.obtener_url.outputs.url }}
           output: images/img-${{ matrix.fecha }}.jpg
