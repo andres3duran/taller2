@@ -73,10 +73,10 @@ jobs:
           fi
 
       - name: Descargar imagen desde la URL
-        uses: jpmens/wget@v1.0.1  # Acción para descargar la imagen
+        uses: actions/download-file@v2
         with:
-          url: ${{ steps.obtener_url.outputs.url }}
-          filename: images/img-${{ matrix.fecha }}.jpg
+          url: ${{ steps.cache_api.outputs.url }}
+          path: images/img-${{ matrix.fecha }}.jpg
 
       - name: Subir imágenes como artefactos
         uses: actions/upload-artifact@v4
