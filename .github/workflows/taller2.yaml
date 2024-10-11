@@ -66,11 +66,12 @@ jobs:
             exit 0
           fi
 
-      - name: Descargar imagen usando hollance/download-file
-        uses: hollance/download-file@v1.0.1 # Asegúrate de usar la versión correcta de la acción
+      - name: Descargar imagen desde la URL
+        uses: jakejarvis/download-file@v1
         with:
-          url: ${{ steps.obtener_url.outputs.url }}
-          output: images/img-${{ matrix.fecha }}.jpg
+          url: "${{ steps.obtener_url.outputs.url }}"
+          output: "images/img-${{ matrix.fecha }}.jpg"
+
 
       - name: Subir imágenes como artefactos
         uses: actions/upload-artifact@v4
