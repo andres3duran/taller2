@@ -58,8 +58,8 @@ jobs:
             echo "$response" > "$cache_file"
             url=$(echo "$response" | jq -r '.url')
           fi
-          
-          if [ "$url" != "null" ] && [ -n "$url" ]; then
+
+          if [ "$url" != "null" ]; then
             echo "url=$url" >> $GITHUB_OUTPUT
           else
             echo "No se encontró imagen para la fecha: $fecha"
@@ -67,16 +67,15 @@ jobs:
           fi
 
       - name: Descargar imagen desde la URL
-        id: download_image
-        uses: actions/download-file@v3
+        uses: actions/download-file@v1
         with:
           url: ${{ steps.obtener_url.outputs.url }}
-          output: "images/img-${{ matrix.fecha }}.jpg"
+          path: images/img-${{ matrix.fecha }}.jpg
 
       - name: Subir imágenes como artefactos
         uses: actions/upload-artifact@v4
         with:
-          name: "img-${{ matrix.fecha }}"
+          name: "Imágenes de la NASA para ${{ matrix.fecha }}"
           path: images/img-${{ matrix.fecha }}.jpg
           retention-days: 1
 
