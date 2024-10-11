@@ -65,9 +65,10 @@ jobs:
             echo "No se encontró imagen para la fecha: $fecha"
             exit 0
           fi
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
+
+      - name: Imprimir URL de la imagen
+        run: |
+          echo "URL de la imagen a descargar: ${{ env.url }}"
 
       - name: Descargar imagen desde la URL
         uses: minituff/save-image@v1.4
@@ -79,7 +80,7 @@ jobs:
         run: |
           if [[ ! -f "images/img-${{ matrix.fecha }}.jpg" ]]; then
             echo "Error: La imagen no fue descargada correctamente."
-          exit 1
+            exit 1
           fi
 
       - name: Subir imágenes como artefactos
