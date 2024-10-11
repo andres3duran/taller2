@@ -58,8 +58,8 @@ jobs:
             echo "$response" > "$cache_file"
             url=$(echo "$response" | jq -r '.url')
           fi
-
-          if [ "$url" != "null" ]; then
+          
+          if [ "$url" != "null" ] && [ -n "$url" ]; then
             echo "url=$url" >> $GITHUB_OUTPUT
           else
             echo "No se encontró imagen para la fecha: $fecha"
@@ -67,15 +67,16 @@ jobs:
           fi
 
       - name: Descargar imagen desde la URL
-        run: |
-          url="${{ steps.obtener_url.outputs.url }}"
-          echo "Descargando imagen desde $url"
-          curl -L -o "images/img-${{ matrix.fecha }}.jpg" "$url"
+        id: download_image
+        uses: hollance/download-file@v1.0.0
+        with:
+          url: ${{ steps.obtener_url.outputs.url }}
+          output: "images/img-${{ matrix.fecha }}.jpg"
 
       - name: Subir imágenes como artefactos
         uses: actions/upload-artifact@v4
         with:
-          name: "Imágenes de la NASA para ${{ matrix.fecha }}"
+          name: "img-${{ matrix.fecha }}"
           path: images/img-${{ matrix.fecha }}.jpg
           retention-days: 1
 
