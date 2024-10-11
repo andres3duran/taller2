@@ -67,10 +67,10 @@ jobs:
           fi
 
       - name: Descargar imagen desde la URL
-        uses: jakejarvis/download-file@v1
-        with:
-          url: ${{ steps.obtener_url.outputs.url }}
-          path: images/img-${{ matrix.fecha }}.jpg
+        run: |
+          url="${{ steps.obtener_url.outputs.url }}"
+          echo "Descargando imagen desde $url"
+          curl -L -o "images/img-${{ matrix.fecha }}.jpg" "$url"
 
       - name: Subir imágenes como artefactos
         uses: actions/upload-artifact@v4
@@ -78,3 +78,4 @@ jobs:
           name: "Imágenes de la NASA para ${{ matrix.fecha }}"
           path: images/img-${{ matrix.fecha }}.jpg
           retention-days: 1
+
