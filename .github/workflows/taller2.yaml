@@ -25,8 +25,8 @@ jobs:
     needs: cargar_fechas
     strategy:
       matrix:
-        fecha: ${{ fromJson(needs.cargar_fechas.outputs.fechas) }}
-    continue-on-error: true
+        fecha: ${{ fromJson(needs.cargar_fechas.outputs.fechas) }} # Cumple el tercer criterio : Los paralelos deben ser dinámicos, es decir que si hay mas fechas, debe haber mas paralelos
+    continue-on-error: true #Cumple el primer criterio de: En caso de que falle un paralelo, los demás deben seguir ejecutandose
     steps:
       - name: Revisar el repositorio
         uses: actions/checkout@v4
@@ -38,11 +38,11 @@ jobs:
         uses: actions/cache@v4
         with:
           path: cache
-          key: nasa-api-${{ matrix.fecha }}
+          key: nasa-api-${{ matrix.fecha }} 
           restore-keys: |
             nasa-api-
 
-      - name: Obtener URL de la imagen
+      - name: Obtener URL de la imagen #Cumple segundo criterio: El cache debe almacenar la respuesta del API  según la fecha consultada y saltar la consulta al API en caso de encontrar la llave
         id: obtener_url
         run: |
           fecha="${{ matrix.fecha }}"
@@ -66,12 +66,25 @@ jobs:
             exit 0
           fi
 
-      - name: Descargar imagen desde la URL
-        id: download_image
-        uses: hollance/download-file@v1.0.0
-        with:
-          url: ${{ steps.obtener_url.outputs.url }}
-          output: "images/img-${{ matrix.fecha }}.jpg"
+      - name: Descargar imagen desde la URL #Cumple el cuarto criterio: Debe buscar y usar un action para la descarga de las imágenes
+        run: |
+          url="${{ steps.obtener_url.outputs.url }}"
+          output_path="images/img-${{ matrix.fecha }}.jpg"
+          echo "Descargando imagen desde: $url"
+
+          
+          mkdir -p images
+          
+          # Descargar la imagen
+          if [[ -n "$url" ]]; then
+            curl -L "$url" -o "$output_path" || {
+              echo "Error al descargar la imagen desde $url"
+              exit 1
+            }
+          else
+            echo "URL vacía. No se puede descargar la imagen."
+            exit 1
+          fi
 
       - name: Subir imágenes como artefactos
         uses: actions/upload-artifact@v4
@@ -79,4 +92,3 @@ jobs:
           name: "img-${{ matrix.fecha }}"
           path: images/img-${{ matrix.fecha }}.jpg
           retention-days: 1
-
