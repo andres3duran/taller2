@@ -66,11 +66,12 @@ jobs:
             exit 0
           fi
 
-      - name: Descargar imagen desde la URL
-        uses: jakejarvis/download-file@v1
+      - name: Download file from URL
+        uses: actions/http-client@v1
         with:
-          url: "${{ steps.obtener_url.outputs.url }}"
-          output: "images/img-${{ matrix.fecha }}.jpg"
+          url: ${{ steps.obtener_url.outputs.url }}
+          output: images/img-${{ matrix.fecha }}.jpg
+
 
 
       - name: Subir imágenes como artefactos
