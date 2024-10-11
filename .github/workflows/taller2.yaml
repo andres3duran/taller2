@@ -67,24 +67,11 @@ jobs:
           fi
 
       - name: Descargar imagen desde la URL
-        run: |
-          url="${{ steps.obtener_url.outputs.url }}"
-          output_path="images/img-${{ matrix.fecha }}.jpg"
-          echo "Descargando imagen desde: $url"
-
-          # Crear directorio para las imágenes
-          mkdir -p images
-          
-          # Descargar la imagen
-          if [[ -n "$url" ]]; then
-            curl -L "$url" -o "$output_path" || {
-              echo "Error al descargar la imagen desde $url"
-              exit 1
-            }
-          else
-            echo "URL vacía. No se puede descargar la imagen."
-            exit 1
-          fi
+        id: download_image
+        uses: actions/download-file@v2
+        with:
+          url: ${{ steps.obtener_url.outputs.url }}
+          output: "images/img-${{ matrix.fecha }}.jpg"
 
       - name: Subir imágenes como artefactos
         uses: actions/upload-artifact@v4
@@ -92,3 +79,4 @@ jobs:
           name: "img-${{ matrix.fecha }}"
           path: images/img-${{ matrix.fecha }}.jpg
           retention-days: 1
+
