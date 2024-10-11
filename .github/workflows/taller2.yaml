@@ -42,17 +42,11 @@ jobs:
           restore-keys: |
             nasa-api-
 
-      - name: Obtener la URL de la imagen desde la API de NASA
+      - name: Obtener URL de la imagen
         id: obtener_url
         run: |
           fecha="${{ matrix.fecha }}"
           echo "Procesando fecha: $fecha"
-
-          # Validar formato de fecha simple
-          if ! [[ "$fecha" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
-            echo "Formato de fecha inválido: $fecha. Saltando."
-            exit 0
-          fi
 
           cache_file="cache/${fecha}.json"
           if [ -f "$cache_file" ]; then
@@ -64,12 +58,12 @@ jobs:
             echo "$response" > "$cache_file"
             url=$(echo "$response" | jq -r '.url')
           fi
-
-          if [ "$url" == "null" ] || [ -z "$url" ]; then
-            echo "No se encontró imagen para la fecha: $fecha o URL está vacía."
-            exit 0
-          else
+          
+          if [ "$url" != "null" ] && [ -n "$url" ]; then
             echo "url=$url" >> $GITHUB_OUTPUT
+          else
+            echo "No se encontró imagen para la fecha: $fecha"
+            exit 0
           fi
 
       - name: Descargar imagen desde la URL
@@ -78,16 +72,19 @@ jobs:
           output_path="images/img-${{ matrix.fecha }}.jpg"
           echo "Descargando imagen desde: $url"
 
-          # Comprobar si la URL es válida
-          if [[ -z "$url" ]]; then
-            echo "Error: URL de la imagen está vacía. No se puede descargar."
+          # Crear directorio para las imágenes
+          mkdir -p images
+          
+          # Descargar la imagen
+          if [[ -n "$url" ]]; then
+            curl -L "$url" -o "$output_path" || {
+              echo "Error al descargar la imagen desde $url"
+              exit 1
+            }
+          else
+            echo "URL vacía. No se puede descargar la imagen."
             exit 1
           fi
-
-          curl -L "$url" -o "$output_path" || {
-            echo "Error al descargar la imagen desde $url"
-            exit 1
-          }
 
       - name: Subir imágenes como artefactos
         uses: actions/upload-artifact@v4
