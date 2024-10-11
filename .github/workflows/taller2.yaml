@@ -67,7 +67,7 @@ jobs:
           fi
 
       - name: Download file from URL
-        uses: actions/http-client@v1
+        uses: minituff/save-image@v1.4
         with:
           url: ${{ steps.obtener_url.outputs.url }}
           output: images/img-${{ matrix.fecha }}.jpg
